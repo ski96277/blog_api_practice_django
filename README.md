@@ -3,7 +3,7 @@
 
 I'm creating a project where i will add diffrent types of view like class Based and Function Based and Generic API Views And Model Mixins
 
-## Function Based Api
+## Function Based CURD Api
 
 
 #### Views.py
@@ -191,3 +191,71 @@ urlpatterns = [
 ]
 
 ```
+
+
+## Mixins and generics Based CURD Operation
+
+
+#### Views.py
+
+```javascript
+
+
+from .serializers import PostSerializer
+from .models import Post
+from rest_framework import generics,mixins
+from rest_framework.request import Request
+
+#Create Class based generic and mixin class
+
+class PostListCreationView(generics.GenericAPIView,mixins.CreateModelMixin,mixins.ListModelMixin):
+    """
+    A view for creating and listing posts
+    """
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    def get(self,request:Request, *args, **kwargs):
+
+        return self.list(request=request,*args,**kwargs)      
+
+    def post(self,request:Request,*args, **kwargs):
+        
+        return self.create(request=request,*args,**kwargs)
+        
+class PostRetrieveUpdateDeleteView(generics.GenericAPIView,mixins.UpdateModelMixin,
+                                   mixins.DestroyModelMixin,mixins.RetrieveModelMixin):
+
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()    
+
+    def get(self,request:Request,*args,**kwargs):
+        return self.retrieve(request=request,*args,**kwargs)
+    def put(self,request:Request,*args, **kwargs):
+
+       return self.update(request= request, *args, **kwargs)
+    
+
+    def delete(self,request: Request,*args, **kwargs):
+        return self.destroy(request= request,*args, **kwargs)
+
+
+```
+
+#### Views.py
+
+```javascript
+
+from . import views
+from django.urls import path
+
+urlpatterns = [
+
+    path('',views.PostListCreationView.as_view(),name='Get All post api'),
+    path('update_delete_retrieve/<int:pk>',views.PostRetrieveUpdateDeleteView.as_view(),name="Posts_Create api"),
+    
+    
+]
+
+```
+
+
