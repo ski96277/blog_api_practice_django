@@ -3,8 +3,8 @@ from django.urls import path
 
 urlpatterns = [
 
-    path('',views.getAllPost,name='Get All post api'),
-    path('create/',views.postCreate,name="Posts_Create api"),
-    path('update/<int:post_id>',views.postUpdate,name='Post update api'),
-    path('delete/<int:post_id>',views.postDelete,name = 'Post Deleted Api')
+    path('',views.PostListCreationView.as_view(),name='Get All post api'),
+    path('update_delete_retrieve/<int:post_id>',views.PostRetrieveUpdateDeleteView.as_view(),name="Posts_Create api"),
+    
+    
 ]

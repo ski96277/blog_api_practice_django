@@ -1,55 +1,62 @@
 from django.shortcuts import render
 from django.http import HttpRequest,JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,APIView
 from .serializers import PostSerializer
 from .models import Post
 from rest_framework import status
+from rest_framework.request import Request
 
 #Create Class based generic and mixin class
 
-
-
-# Create your Function Based views here.
-@api_view(['POST'])
-def postCreate(request: HttpRequest):
-    if request.method == "POST":
-        serializer = PostSerializer(data = request.data)
+class PostListCreationView(APIView):
+    """
+    A view for creating and listing posts
+    """
+    serializer_class = PostSerializer
+    def get(self,request:Request, *args, **kwargs):
+        posts = Post.objects.all();
+        serializer = self.serializer_class(instance = posts,many = True)
+        return JsonResponse(data={"posts":serializer.data},status = status.HTTP_200_OK)
+    
+    def post(self,request:Request,*args, **kwargs):
+        data  = request.data
+        serializer = self.serializer_class(data = data)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse({'post':serializer.data},status = status.HTTP_201_CREATED)
-    
-        return JsonResponse({"message":"Data is invalid"},status  = status.status.HTTP_400_BAD_REQUEST)
-    
-@api_view(['GET'])
-def getAllPost(request):
+            return JsonResponse({"message":"Data Saved","post":serializer.data},status = status.HTTP_201_CREATED)
+        return JsonResponse({"message":"Data invalid"},status = status.HTTP_400_BAD_REQUEST)
 
-    if request.method =="GET":
+class PostRetrieveUpdateDeleteView(APIView):
 
-        postModel = Post.objects.all()
-        serializer = PostSerializer(postModel,many = True)
+    serializer_class = PostSerializer
+
+    def get(self,request:Request,post_id:int):
+        try:
+            post = Post.objects.get(pk = post_id)
+        except Post.DoesNotExist:
+            return JsonResponse(data={"message":"post id is not found"})
         
-        return JsonResponse({"posts":serializer.data},status = status.HTTP_200_OK)
+        serializer = self.serializer_class(post)
+        return JsonResponse(data= {"message":"Post Data","post":serializer.data})
     
-@api_view(['PUT'])
-def postUpdate(request:HttpRequest, post_id:int):
-    if request.method == 'PUT':
-        try:
-            postModel = Post.objects.get(pk = post_id)
-        except Post.DoesNotExist:
-            return JsonResponse({"message":"Post not found"},status = status.HTTP_404_NOT_FOUND)
+    def put(self,request:Request,post_id:int):
 
-        serializer = PostSerializer(postModel,data = request.data)
+        try:
+            post = Post.objects.get(pk = post_id)
+        except Post.DoesNotExist:
+            return JsonResponse(data={"message":"post id is not found"})
+        
+        serializer = PostSerializer(post,request.data)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse({"message":"Post updated","post":serializer.data},status = status.HTTP_200_OK)
-        return JsonResponse({"message":"Post data is not valid"},status = status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(data={"message":"Post data update",'post':serializer.data})
+        return  JsonResponse(data={"message":"post Data is not valid"})
 
-@api_view(['DELETE'])
-def postDelete(request:HttpRequest, post_id:int):
-    if request.method == "DELETE":
+    def delete(self,request: Request,post_id:int):
         try:
-            postModel = Post.objects.get(pk = post_id)
-            postModel.delete()
-            return JsonResponse({"message":"post data deleted"},status = status.HTTP_200_OK)
+                
+            post = Post.objects.get(pk = post_id)
+            post.delete()
+            return JsonResponse(data={"message":"post data deleted"})
         except Post.DoesNotExist:
-            return JsonResponse({"message":"Post data not found"},status = status.HTTP_404_NOT_FOUND)
+            return JsonResponse(data={"message":"post data Not found"})
